@@ -1,6 +1,6 @@
 {
     "name": "tokenly/counterparty-transaction-parser",
-    "description": "A library",
+    "description": "A counterparty transaction parser",
     "type": "library",
     "license": "MIT",
     "authors": [

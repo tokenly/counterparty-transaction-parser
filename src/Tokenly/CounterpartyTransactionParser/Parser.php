@@ -2,6 +2,7 @@
 
 namespace Tokenly\CounterpartyTransactionParser;
 
+use Tokenly\CurrencyLib\CurrencyUtil;
 use \Exception;
 
 /*
@@ -201,7 +202,8 @@ class Parser
             return $parsed_data;
         }
 
-        $parsed_data['quantity'] = $quantity;
+        $parsed_data['quantitySat'] = $quantity;
+        $parsed_data['quantity'] = CurrencyUtil::satoshisToValue($quantity);
         $parsed_data['asset'] = self::asset_name($asset_id);
         return $parsed_data;
 

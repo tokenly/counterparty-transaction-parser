@@ -193,9 +193,9 @@ class Parser
 
 
         $parsed_data = [
-            'type'        => $type,
-            'source'      => $source,
-            'destination' => $destination,
+            'type'         => $type,
+            'sources'      => [$source],
+            'destinations' => [$destination],
         ];
         if ($type !== 'send') {
             return $parsed_data;

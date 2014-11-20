@@ -23,8 +23,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertEquals('1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz', $counterparty_data['sources'][0]);
         PHPUnit::assertEquals('1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD', $counterparty_data['destinations'][0]);
         PHPUnit::assertEquals('LTBCOIN', $counterparty_data['asset']);
-        PHPUnit::assertEquals(53383451959, $counterparty_data['quantitySat']);
-        PHPUnit::assertEquals(533.83451959, $counterparty_data['quantity']);
+        PHPUnit::assertEquals(53383451959, $counterparty_data['quantity']);
     } 
 
     public function testTransactionType() {

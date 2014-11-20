@@ -13,8 +13,7 @@
     "require": {
         "php": ">=5.5.0",
         "ext-mcrypt": "*",
-        "ext-gmp": "*",
-        "tokenly/bitcoin-currency-lib": "dev-master"
+        "ext-gmp": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "~4"

@@ -157,7 +157,7 @@ class Parser
      * @param  int $type_id The type id
      * @return string|null the type
      */
-    public static function typeIDToType($type_id) {
+    protected static function typeIDToType($type_id) {
         if ($type_id === 0) {
             return 'send';
         } else if ($type_id === 10) {
@@ -201,7 +201,6 @@ class Parser
             return $parsed_data;
         }
 
-        $parsed_data['asset'] = $asset_id;
         $parsed_data['quantity'] = $quantity;
         $parsed_data['asset'] = self::asset_name($asset_id);
         return $parsed_data;
@@ -300,8 +299,6 @@ class Parser
         if(strlen($hex) == 0)
             return '';
 
-        $base58chars = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
         // Convert the hex string to a base10 integer
         $num = gmp_strval(gmp_init($hex, 16), 58);
 
@@ -309,7 +306,7 @@ class Parser
         if($num != '0') {
             $num = strtr($num
             , '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv'
-            , $base58chars);
+            , self::$B58_DIGITS);
         } else {
             $num = '';
         }

@@ -366,11 +366,10 @@ class Parser
 
         # Divide that integer into Base 26 string.
         $asset_name = '';
-        $n = $asset_id;
-        while ($n > 0) {
-            $r = $n % 26;
-            $asset_name = $b26_digits[$r].$asset_name;
-            $n = floor($n / 26);
+        $n = gmp_init($asset_id);
+        while (gmp_cmp($n, 0) > 0) {
+            list($n, $r) = gmp_div_qr($n, 26, GMP_ROUND_ZERO);
+            $asset_name = substr($b26_digits, gmp_intval($r), 1).$asset_name;
         }
         return $asset_name;
     }

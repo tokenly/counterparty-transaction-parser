@@ -26,6 +26,20 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertEquals(53383451959, $counterparty_data['quantity']);
     } 
 
+    public function testParser2() {
+        $parser = new Parser();
+        
+        $tx_data = $this->getSampleCounterpartyTransaction2();
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data);
+        PHPUnit::assertNotEmpty($counterparty_data);
+
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals('17XotRS4RaeG6EAshBrWE4KMfizaqfLk5T', $counterparty_data['sources'][0]);
+        PHPUnit::assertEquals('1Mh9zGQPS1HRLU8ivZ52MaCcomrGGEyJQs', $counterparty_data['destinations'][0]);
+        PHPUnit::assertEquals('TESTCURRENCY', $counterparty_data['asset']);
+        PHPUnit::assertEquals(1000000000, $counterparty_data['quantity']);
+    } 
+
     public function testTransactionType() {
         $parser = new Parser();
         
@@ -46,6 +60,11 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     protected function getSampleCounterpartyTransaction() {
         // 533.83451959 LTBCOIN
         return json_decode('{"txid":"1886737bb2a4be1af89b1d0e5af427ef2a7fc439e2ed10a42d3efeb1f71b69aa","version":1,"locktime":0,"vin":[{"txid":"26bc3e4933c68d503d0c24bc039a64ace18b2899dc54f799a80f20fc047d7688","vout":2,"scriptSig":{"asm":"3045022100b1514287d58b56c8bb2df00349cdebd1c7fded0d7fe92320743dd631836ef62002200f56062249ce5a64b81d0921ac65151633c1c54dea3a93bc51844863d201d87301 0370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c"},"sequence":4294967295,"n":0,"addr":"1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz","valueSat":9114000,"value":0.09114,"doubleSpentTxID":null}],"vout":[{"value":"0.00001250","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"]}},{"value":"0.00001250","n":1,"scriptPubKey":{"asm":"1 0370a00e36f0ca37c2d80631e0209ede134dbd927d50a364c6747f9c5f3c2c7a9c 1c434e5452505254590000000000000000d806c1d50000000c6de6d53700000000 2 OP_CHECKMULTISIG","reqSigs":1,"type":"multisig","addresses":["1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz","1HT7xU2Ngenf7D4yocz2SAcnNLW7rK8d4E"]}},{"value":"0.09108000","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 9b2c0c5f30a2dde09c2a9d3618ba390c9a688754 OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["1F9UWGP1YwZsfXKogPFST44CT3WYh4GRCz"]},"spentTxId":"fbd318eb157becef3e26460756eaee2f4910d8995d23414ce1938563ecc61784","spentIndex":0,"spentTs":1416091287}],"blockhash":"00000000000000000347e702fdc4d6ed74dca01844857deb5fec560c25b14d51","confirmations":25,"time":1416091287,"blocktime":1416091287,"valueOut":0.091105,"size":306,"valueIn":0.09114,"fees":0.000035}', true);
+    }
+
+    protected function getSampleCounterpartyTransaction2() {
+        // 533.83451959 LTBCOIN
+        return json_decode('{"txid":"c57679bfc68a62025df34303b914aa22bc7ebd840e148460a6be2fa4dc1cc9b5","version":1,"locktime":0,"vin":[{"txid":"1aedd05e9c610329f972654dd0b42df1f932db6915e15a6f2f799efca9ab84bf","vout":2,"scriptSig":{"asm":"3045022100de88671974012e75ae17672d06eaf797927233c7cae4c6f2e87cdacc5843bde50220017be96f8dae45678495cdba270672627f9e3a3b4b72fd68a33237a876f275d301 02dc751a9373996e6ba4b5050f99d07a7c289004adeac1ab7dff66975b69deecfc"},"sequence":4294967295,"n":0,"addr":"17XotRS4RaeG6EAshBrWE4KMfizaqfLk5T","valueSat":18872000,"value":0.18872,"doubleSpentTxID":null}],"vout":[{"value":"0.00007800","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 e2faa809bd83e00281fc381ae488590132db8cab OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["1Mh9zGQPS1HRLU8ivZ52MaCcomrGGEyJQs"]}},{"value":"0.00007800","n":1,"scriptPubKey":{"asm":"1 02dc751a9373996e6ba4b5050f99d07a7c289004adeac1ab7dff66975b69deecfc 1c434e5452505254590000000000fa1f18a3ed95f0000000003b9aca0000000000 2 OP_CHECKMULTISIG","reqSigs":1,"type":"multisig","addresses":["17XotRS4RaeG6EAshBrWE4KMfizaqfLk5T","1HT7xU2Ngenf7D4yocz2SAcnNLW7rK8d4E"]}},{"value":"0.18846400","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 47a45f5bef95b261d5ba654c47f198b75077616b OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["17XotRS4RaeG6EAshBrWE4KMfizaqfLk5T"]},"spentTxId":"8031d1e1d12d38d3fc712ee47f7364c1b6979c8b2422955c2eccd9d22642105a","spentIndex":0,"spentTs":1416531752}],"blockhash":"00000000000000001acb1484131a0b69c7666e1a9b94e483babae59adf1fe160","confirmations":7,"time":1416531752,"blocktime":1416531752,"valueOut":0.18862,"size":306,"valueIn":0.18872,"fees":0.0001}', true);
     }
 
     protected function getSampleBitcoinTransaction() {

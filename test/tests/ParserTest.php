@@ -11,12 +11,13 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 {
     static $B58_DIGITS  = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
+    const SATOSHI = 100000000;
 
-    public function testParser() {
+    public function testParser1() {
         $parser = new Parser();
         
         $tx_data = $this->getSampleCounterpartyTransaction();
-        $counterparty_data = $parser->parseBitcoinTransaction($tx_data);
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 1);
         PHPUnit::assertNotEmpty($counterparty_data);
 
         PHPUnit::assertEquals('send', $counterparty_data['type']);
@@ -30,7 +31,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
         
         $tx_data = $this->getSampleCounterpartyTransaction2();
-        $counterparty_data = $parser->parseBitcoinTransaction($tx_data);
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 1);
         PHPUnit::assertNotEmpty($counterparty_data);
 
         PHPUnit::assertEquals('send', $counterparty_data['type']);
@@ -40,11 +41,25 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertEquals(1000000000, $counterparty_data['quantity']);
     } 
 
+    public function testProtocol2Parser() {
+        $parser = new Parser();
+        
+        $tx_data = $this->getSampleCounterpartyTransactionProtocol2();
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
+        PHPUnit::assertNotEmpty($counterparty_data);
+
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals('1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1', $counterparty_data['sources'][0]);
+        PHPUnit::assertEquals('12pv1K6LTLPFYXcCwsaU7VWYRSX7BuiF28', $counterparty_data['destinations'][0]);
+        PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
+        PHPUnit::assertEquals(1000 * self::SATOSHI, $counterparty_data['quantity']);
+    } 
+
     public function testTransactionType() {
         $parser = new Parser();
         
         $tx_data = $this->getSampleCounterpartyTransaction();
-        $type = $parser->lookupCounterpartyTransactionType($tx_data);
+        $type = $parser->lookupCounterpartyTransactionType($tx_data, 1);
         PHPUnit::assertEquals('send', $type);
     } 
 
@@ -52,7 +67,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $parser = new Parser();
         
         $tx_data = $this->getSampleBitcoinTransaction();
-        $type = $parser->lookupCounterpartyTransactionType($tx_data);
+        $type = $parser->lookupCounterpartyTransactionType($tx_data, 1);
         PHPUnit::assertNull($type);
     } 
 
@@ -69,6 +84,10 @@ class ParserTest extends \PHPUnit_Framework_TestCase
 
     protected function getSampleBitcoinTransaction() {
         return json_decode('{"txid":"cf9d9f4d53d36d9d34f656a6d40bc9dc739178e6ace01bcc42b4b9ea2cbf6741","version":1,"locktime":0,"vin":[{"txid":"cc669b824186886407ad7edd46796437e20ad73c89080420c45e5803f917228d","vout":2,"scriptSig":{"asm":"3045022100a37bcfd3087fa4ba9480ce09c7adf02ba3ce2208d6170b42e50b5b2633b91ee6022025d409d3d9dae0a159982c7ab079787948b6b6c5f87fa583d3886ebf1e074c8901 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"},"sequence":4294967295,"n":0,"addr":"1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1","valueSat":781213,"value":0.00781213,"doubleSpentTxID":null}],"vout":[{"value":"0.00400000","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 c56cb39f9b289c0ec4ef6943fa107c904820fe09 OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["1JztLWos5K7LsqW5E78EASgiVBaCe6f7cD"]},"spentTxId":"e90bc279294d704d09b227ad0e37459f61cccb85008605656dc8b024235eefe8","spentIndex":2,"spentTs":1403958484},{"value":"0.00361213","n":1,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG","reqSigs":1,"type":"pubkeyhash","addresses":["1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"]},"spentTxId":"3587bfa8d96c10b6696728651900db2ad6b41321ea44f26693de4f90d2b63526","spentIndex":0,"spentTs":1405081243}],"blockhash":"00000000000000003a1e5abc2d7af7f38a614d2fcbafe309b7e8aa147d508a9c","confirmations":22369,"time":1403957896,"blocktime":1403957896,"valueOut":0.00761213,"size":226,"valueIn":0.00781213,"fees":0.0002}', true);
+    }
+
+    protected function getSampleCounterpartyTransactionProtocol2() {
+        return json_decode('{"txid":"e0082d1fc37172ccf0f5ebfc3cc54291e463384712f44f32ba4996c02045966f","version":1,"locktime":0,"vin":[{"txid":"8fd9f689f158a426867215dbdee58e9eab6c818097d4bf2bcf0bd1458f3c55ab","vout":2,"scriptSig":{"asm":"3045022100a178c9accd7972cfe30a03c98ff5f684bdf0b144eb415f4a4b7fcff596283f720220267f68a6413093b97a42ed5c2f2811193c1bbdd07d668e3076f99751044c347a01 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6","hex":"483045022100a178c9accd7972cfe30a03c98ff5f684bdf0b144eb415f4a4b7fcff596283f720220267f68a6413093b97a42ed5c2f2811193c1bbdd07d668e3076f99751044c347a012102f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"},"sequence":4294967295,"n":0,"addr":"1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1","valueSat":95270,"value":0.0009527,"doubleSpentTxID":null}],"vout":[{"value":"0.00005430","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 1407ec32be440f32fc70f4eea810acd98f32aa32 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a9141407ec32be440f32fc70f4eea810acd98f32aa3288ac","reqSigs":1,"type":"pubkeyhash","addresses":["12pv1K6LTLPFYXcCwsaU7VWYRSX7BuiF28"]}},{"value":"0.00002500","n":1,"scriptPubKey":{"asm":"1 0276d539826e5ec10fed9ef597d5bfdac067d287fb7f06799c449971b9ddf9fec6 02af7efeb1f7cf0d5077ae7f7a59e2b643c5cd01fb55221bf76221d8c8ead92bf0 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6 3 OP_CHECKMULTISIG","hex":"51210276d539826e5ec10fed9ef597d5bfdac067d287fb7f06799c449971b9ddf9fec62102af7efeb1f7cf0d5077ae7f7a59e2b643c5cd01fb55221bf76221d8c8ead92bf02102f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e653ae","reqSigs":1,"type":"multisig","addresses":["17MPn1QXt1SLqKWy3NPmJQ7iT5dJKRhCU7","12oEzNKh5TQpKDP1vfeTGnSjoxkboo1m5u","1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"]}},{"value":"0.00086340","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a9146ca4b6b20eac497e9ca94489c545a3372bdd2fa788ac","reqSigs":1,"type":"pubkeyhash","addresses":["1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"]}}],"valueOut":0.0009427,"size":340,"valueIn":0.0009527,"fees":0.00001}', true);
     }
 
 

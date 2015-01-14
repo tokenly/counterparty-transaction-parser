@@ -189,9 +189,12 @@ class Parser
     protected function parseBitcoinTransactionVersion2(array $tx) {
 
         // def arc4_decrypt(cyphertext):
-        $arc4_decrypt_key = hex2bin($tx['vin'][0]['txid']);
+        $arc4_decrypt_key = null;
+        if (isset($tx['vin'][0]['txid'])) {
+            $arc4_decrypt_key = hex2bin($tx['vin'][0]['txid']);
+        }
         // $arc4_decrypt_key = substr($arc4_decrypt_key, 0, -1);
-        self::wlog("\$tx['vin'][0]['txid']=".json_encode($tx['vin'][0]['txid'], 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key), 192);
+        self::wlog("\$tx['vin'][0]['txid']=".json_encode(isset($tx['vin'][0]['txid']) ? $tx['vin'][0]['txid'] : null, 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key), 192);
         $fn_arc4_decrypt = function($cyphertext) use ($arc4_decrypt_key) {
             return self::arc4decrypt($arc4_decrypt_key, $cyphertext);
         };

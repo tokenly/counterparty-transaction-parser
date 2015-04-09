@@ -211,7 +211,7 @@ class Parser
         // def decode_opreturn(asm):
         $fn_decode_opreturn = function($asm) use ($fn_get_opreturn, $fn_arc4_decrypt) {
             $chunk = $fn_get_opreturn($asm);
-            $chunk = $fn_arc4_decrypt($chunk);
+            $data = $fn_arc4_decrypt($chunk);
             if (substr($data, 0, self::$PREFIX_LENGTH) == self::$PREFIX) {
                 $destination = null;
                 $data = substr($data, self::$PREFIX_LENGTH);

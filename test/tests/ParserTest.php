@@ -92,7 +92,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertEquals('12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK', $counterparty_data['sources'][0]);
         PHPUnit::assertEquals('1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF', $counterparty_data['destinations'][0]);
         PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
-        PHPUnit::assertEquals(50 * self::SATOSHI, $counterparty_data['quantity']);
+        PHPUnit::assertEquals(51 * self::SATOSHI, $counterparty_data['quantity']);
     }
 
     public function testTransactionType() {

@@ -194,7 +194,7 @@ class Parser
             $arc4_decrypt_key = hex2bin($tx['vin'][0]['txid']);
         }
         // $arc4_decrypt_key = substr($arc4_decrypt_key, 0, -1);
-        self::wlog("\$tx['vin'][0]['txid']=".json_encode(isset($tx['vin'][0]['txid']) ? $tx['vin'][0]['txid'] : null, 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key), 192);
+        self::wlog("\$tx['vin'][0]['txid']=".json_encode(isset($tx['vin'][0]['txid']) ? $tx['vin'][0]['txid'] : null, 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key));
         $fn_arc4_decrypt = function($cyphertext) use ($arc4_decrypt_key) {
             return self::arc4decrypt($arc4_decrypt_key, $cyphertext);
         };

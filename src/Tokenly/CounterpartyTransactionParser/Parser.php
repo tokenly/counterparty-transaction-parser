@@ -93,16 +93,16 @@ class Parser
                 $asm = explode(' ', $vout['scriptPubKey']['asm']);
                 if (count($asm) == 2 and $asm[0] == 'OP_RETURN') {
                     # OP_RETURN
-                    // self::wlog("OP_RETURN");
+                    // self::DEBUG_LOGGING_ENABLED && self::wlog("OP_RETURN");
 
                     $data_chunk = hex2bin($asm[1]);
                     $data .= $data_chunk;
                 } else if (count($asm) == 5 and $asm[0] == '1' and $asm[3] == '2' and $asm[4] == 'OP_CHECKMULTISIG') {
                     # Multi-sig
-                    // self::wlog("Multi-sig");
+                    // self::DEBUG_LOGGING_ENABLED && self::wlog("Multi-sig");
 
                     $data_pubkey = hex2bin($asm[2]);
-                    self::wlog("\$data_pubkey=".self::dumpText($data_pubkey));
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("\$data_pubkey=".self::dumpText($data_pubkey));
                     if ($data_pubkey === false) { continue; }
 
                     $data_chunk_length = unpack('c', substr($data_pubkey, 0, 1))[1];
@@ -110,7 +110,7 @@ class Parser
                     $data .= $data_chunk;
 
                 } else if (count($asm) == 5) {
-                    self::wlog("Other...");
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("Other...");
 
                     $pubkeyhash_string = self::get_pubkeyhash($vout['scriptPubKey']);
                     $pubkeyhash = hex2bin($pubkeyhash_string);
@@ -119,7 +119,7 @@ class Parser
                     if (isset($tx['vin'][0]['coinbase'])) { throw new Exception("coinbase transaction", 1); }
 
                     $data_pubkey = self::arc4decrypt(hex2bin($tx['vin'][0]['txid']), $pubkeyhash);
-                    self::wlog("data_pubkey=".self::dumpText($data_pubkey));
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("data_pubkey=".self::dumpText($data_pubkey));
                     if (substr($data_pubkey, 1, 8) == self::$PREFIX or $pubkeyhash_encoding) {
                         $pubkeyhash_encoding = true;
                         $data_chunk_length = $data_pubkey[0];
@@ -145,7 +145,7 @@ class Parser
 
             } // end foreach loop through vin
 
-            self::wlog('$data='.self::dumpText($data));
+            self::DEBUG_LOGGING_ENABLED && self::wlog('$data='.self::dumpText($data));
 
             # Check for, and strip away, prefix (except for burns).
             if ($destination == self::$UNSPENDABLE) {
@@ -179,7 +179,7 @@ class Parser
             return $this->parseTransactionData($data, $source, $destination);
 
         } catch (Exception $e) {
-            self::wlog("ERROR: ".$e->getMessage()." at line ".$e->getLine());
+            self::DEBUG_LOGGING_ENABLED && self::wlog("ERROR: ".$e->getMessage()." at line ".$e->getLine());
             return null;
         }
 
@@ -194,7 +194,7 @@ class Parser
             $arc4_decrypt_key = hex2bin($tx['vin'][0]['txid']);
         }
         // $arc4_decrypt_key = substr($arc4_decrypt_key, 0, -1);
-        self::wlog("\$tx['vin'][0]['txid']=".json_encode(isset($tx['vin'][0]['txid']) ? $tx['vin'][0]['txid'] : null, 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key), 192);
+        self::DEBUG_LOGGING_ENABLED && self::wlog("\$tx['vin'][0]['txid']=".json_encode(isset($tx['vin'][0]['txid']) ? $tx['vin'][0]['txid'] : null, 192)." \$arc4_decrypt_key=".self::dumpText($arc4_decrypt_key));
         $fn_arc4_decrypt = function($cyphertext) use ($arc4_decrypt_key) {
             return self::arc4decrypt($arc4_decrypt_key, $cyphertext);
         };
@@ -227,7 +227,7 @@ class Parser
             $pubkeyhash_text = self::get_pubkeyhash_from_asm($asm);
             $pubkeyhash = hex2bin($pubkeyhash_text);
             $chunk = $fn_arc4_decrypt($pubkeyhash);
-            self::wlog("\$fn_decode_checksig \$pubkeyhash=".self::dumpText($pubkeyhash)." \$chunk=".self::dumpText($chunk));
+            self::DEBUG_LOGGING_ENABLED && self::wlog("\$fn_decode_checksig \$pubkeyhash=".self::dumpText($pubkeyhash)." \$chunk=".self::dumpText($chunk));
             if (substr($chunk, 1, 8) == self::$PREFIX) {
                 $data_chunk_length = $chunk[0];
                 $data_chunk = substr($chunk, 1, $data_chunk_length + 1);
@@ -238,7 +238,7 @@ class Parser
                 $ADDRESSVERSION = "00";
                 $destination = self::base58_check_encode($pubkeyhash_text, $ADDRESSVERSION);
                 $data = null;
-                self::wlog("\$fn_decode_checksig \$destination=".self::dumpText($destination));
+                self::DEBUG_LOGGING_ENABLED && self::wlog("\$fn_decode_checksig \$destination=".self::dumpText($destination));
             }
 
             return [$destination, $data];
@@ -247,14 +247,14 @@ class Parser
         // def decode_checkmultisig(asm):
         $fn_decode_checkmultisig = function($asm) use ($fn_arc4_decrypt) {
             list($pubkey_strings, $signatures_required) = self::get_checkmultisig($asm);
-            self::wlog("\$pubkey_strings=".json_encode($pubkey_strings, 192)."\n\$signatures_required=".json_encode($signatures_required, 192));
+            self::DEBUG_LOGGING_ENABLED && self::wlog("\$pubkey_strings=".json_encode($pubkey_strings, 192)."\n\$signatures_required=".json_encode($signatures_required, 192));
 
             $chunk = '';
             foreach(array_slice($pubkey_strings, 0, -1) as $pubkey) { # (No data in last pubkey.)
                 $chunk .= substr(hex2bin($pubkey), 1, -1); # Skip sign byte and nonce byte.
             }
             $chunk = $fn_arc4_decrypt($chunk);
-            self::wlog("\$chunk=".self::dumpText($chunk));
+            self::DEBUG_LOGGING_ENABLED && self::wlog("\$chunk=".self::dumpText($chunk));
             if (substr($chunk, 1, self::$PREFIX_LENGTH) == self::$PREFIX) {
                 // data
                 # Padding byte in each output (instead of just in the last one) so that encoding methods may be mixed. Also, it’s just not very much data.
@@ -296,18 +296,18 @@ class Parser
 
                 // get asm
                 $asm = explode(' ', $vout['scriptPubKey']['asm']);
-                // self::wlog("\$asm=".json_encode($asm, 192));
+                // self::DEBUG_LOGGING_ENABLED && self::wlog("\$asm=".json_encode($asm, 192));
 
                 if ($asm[0] == 'OP_RETURN') {
                     list($new_destination, $new_data) = $fn_decode_opreturn($asm);
                 } else if ($asm[count($asm) - 1] == 'OP_CHECKSIG') {
-                    self::wlog("====== BEGIN OP_CHECKSIG      ======");
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN OP_CHECKSIG      ======");
                     list($new_destination, $new_data) = $fn_decode_checksig($asm);
-                    self::wlog("OP_CHECKSIG \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("OP_CHECKSIG \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
                 } else if ($asm[count($asm) - 1] == 'OP_CHECKMULTISIG') {
-                    self::wlog("====== BEGIN OP_CHECKMULTISIG ======");
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN OP_CHECKMULTISIG ======");
                     list($new_destination, $new_data) = $fn_decode_checkmultisig($asm);
-                    self::wlog("OP_CHECKMULTISIG \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("OP_CHECKMULTISIG \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
                 } else {
                     throw new Exception("unrecognised output type", 1);
                 }
@@ -321,7 +321,7 @@ class Parser
                 } else {
                     if ($new_destination) {
                         // change
-                        self::wlog("Change to $new_destination");
+                        self::DEBUG_LOGGING_ENABLED && self::wlog("Change to $new_destination");
                         break;
                     } else {
                         $data .= $new_data;
@@ -330,7 +330,7 @@ class Parser
 
             } // end foreach loop through vout
 
-            self::wlog('$data='.self::dumpText($data));
+            self::DEBUG_LOGGING_ENABLED && self::wlog('$data='.self::dumpText($data));
 
             # Only look for source if data were found or destination is `UNSPENDABLE`,
             # for speed.
@@ -354,7 +354,7 @@ class Parser
             return $this->parseTransactionData($data, $sources, $destinations);
 
         } catch (Exception $e) {
-            self::wlog("ERROR: ".$e->getMessage()." at line ".$e->getLine());
+            self::DEBUG_LOGGING_ENABLED && self::wlog("ERROR: ".$e->getMessage()." at line ".$e->getLine());
             return null;
         }
 

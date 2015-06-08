@@ -487,7 +487,7 @@ class Parser
     protected static function arc4decrypt($key, $encrypted_text)
     {
         $init_vector = '';
-        return mcrypt_decrypt(MCRYPT_ARCFOUR, $key, $encrypted_text, MCRYPT_MODE_STREAM, $init_vector);
+        return @mcrypt_decrypt(MCRYPT_ARCFOUR, $key, $encrypted_text, MCRYPT_MODE_STREAM, $init_vector);
     }
 
     public static function base58_check_encode($hash160, $address_version) {

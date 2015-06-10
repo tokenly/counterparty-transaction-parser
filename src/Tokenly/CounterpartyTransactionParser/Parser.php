@@ -202,7 +202,7 @@ class Parser
         // def get_opreturn(asm):
         $fn_get_opreturn = function($asm) {
             if (count($asm) == 2 and $asm[0] == 'OP_RETURN') {
-                $pubkeyhash = hex2bin($asm[1]);
+                $pubkeyhash = @hex2bin($asm[1]);
                 return $pubkeyhash;
             }
             throw new Exception("Invalid OP_RETURN", 1);

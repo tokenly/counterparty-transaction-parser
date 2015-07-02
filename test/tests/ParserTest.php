@@ -2,7 +2,6 @@
 
 use Tokenly\CounterpartyTransactionParser\Parser;
 use \PHPUnit_Framework_Assert as PHPUnit;
-use \Exception;
 
 /*
 * 
@@ -71,28 +70,56 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     public function testOpReturnParser() {
         $parser = new Parser();
 
+        // ----------------------------------------------------------------
+        // 1 SOUP
+
         $tx_data = $this->getSampleCounterpartyTransaction4();
         $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
         PHPUnit::assertNotEmpty($counterparty_data);
-
-        // 1 SOUP
         PHPUnit::assertEquals('send', $counterparty_data['type']);
         PHPUnit::assertEquals('1MFHQCPGtcSfNPXAS6NryWja3TbUN9239Y', $counterparty_data['sources'][0]);
         PHPUnit::assertEquals('1Q7VHJDEzVj7YZBVseQWgYvVj3DWDCLwDE', $counterparty_data['destinations'][0]);
-        PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
         PHPUnit::assertEquals(1 * self::SATOSHI, $counterparty_data['quantity']);
+        PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
 
+
+        // ----------------------------------------------------------------
+        // 50 SOUP
 
         $tx_data = $this->getSampleCounterpartyTransaction5();
         $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
         PHPUnit::assertNotEmpty($counterparty_data);
-
-        // 50 SOUP
         PHPUnit::assertEquals('send', $counterparty_data['type']);
         PHPUnit::assertEquals('12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK', $counterparty_data['sources'][0]);
         PHPUnit::assertEquals('1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF', $counterparty_data['destinations'][0]);
-        PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
         PHPUnit::assertEquals(50 * self::SATOSHI, $counterparty_data['quantity']);
+        PHPUnit::assertEquals('SOUP', $counterparty_data['asset']);
+
+
+        // ----------------------------------------------------------------
+        // 0.5 XCP 
+
+        $tx_data = $this->getSampleCounterpartyTransaction6();
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
+        PHPUnit::assertNotEmpty($counterparty_data);
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals(['1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1'], $counterparty_data['sources']);
+        PHPUnit::assertEquals(['19nMhSywqDVkPaSjczSp9dm1SEUBukEsJP'], $counterparty_data['destinations']);
+        PHPUnit::assertEquals(0.5 * self::SATOSHI, $counterparty_data['quantity']);
+        PHPUnit::assertEquals('XCP', $counterparty_data['asset']);
+
+
+        // ----------------------------------------------------------------
+        // 77,119 TATIANACOIN
+
+        $tx_data = $this->getSampleCounterpartyTransaction7();
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
+        PHPUnit::assertNotEmpty($counterparty_data);
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals(['1LHpvZP8QV3CBuDryYdgUs56sd6UYvXuGS'], $counterparty_data['sources']);
+        PHPUnit::assertEquals(['1Max4vpkTbFgMjDpfaEjfPcdwd3ktTBQ4o'], $counterparty_data['destinations']);
+        PHPUnit::assertEquals(77119 * self::SATOSHI, $counterparty_data['quantity']);
+        PHPUnit::assertEquals('TATIANACOIN', $counterparty_data['asset']);
     }
 
     public function testTransactionType() {
@@ -143,6 +170,15 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     protected function getSampleCounterpartyTransaction5() {
         // OP_RETURN 50 SOUP
         return json_decode('{"txid":"48e07bdad04f869850ccdb11b5e6a9e89ee8023111eb4f2e293d3e8ef75befee","version":1,"locktime":0,"vin":[{"txid":"cf8fa29cf63938a787e732c85071695668b9e00bfedff807dfbdc85a6ad6a696","vout":0,"scriptSig":{"asm":"304502210089af043911012c558bd11392d4346da725cd35822c1c6c0140293fed3344176d02207e6ad3945cb6580e654ac579a3ffdc01b93e54c4babc55bde6aa2b97ddf3f0af01 02b0610c458d67d76e348c6bb2f29f66d272e2c66bd23747ac401fefa45d2fc7a0","hex":"48304502210089af043911012c558bd11392d4346da725cd35822c1c6c0140293fed3344176d02207e6ad3945cb6580e654ac579a3ffdc01b93e54c4babc55bde6aa2b97ddf3f0af012102b0610c458d67d76e348c6bb2f29f66d272e2c66bd23747ac401fefa45d2fc7a0"},"sequence":4294967295,"n":0,"addr":"12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK","valueSat":5430,"value":0.0000543,"doubleSpentTxID":null},{"txid":"d6e1e95bae2a4715dce049f464525af1f118876b7e79c311e1fa4c2bf77f4df4","vout":2,"scriptSig":{"asm":"30440220459ef45b40a80a9dc1cb2c33d1f5ddd8d464c4a607dbe2df83049d69b35c7b960220134b69e807eb2bebc3339bfb60a7de5b86c801f64d176fc704a3ce9132e8509301 02b0610c458d67d76e348c6bb2f29f66d272e2c66bd23747ac401fefa45d2fc7a0","hex":"4730440220459ef45b40a80a9dc1cb2c33d1f5ddd8d464c4a607dbe2df83049d69b35c7b960220134b69e807eb2bebc3339bfb60a7de5b86c801f64d176fc704a3ce9132e85093012102b0610c458d67d76e348c6bb2f29f66d272e2c66bd23747ac401fefa45d2fc7a0"},"sequence":4294967295,"n":1,"addr":"12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK","valueSat":1760000,"value":0.0176,"doubleSpentTxID":null}],"vout":[{"value":"0.00005430","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 cab7d87116e620e10a69e666ec6494d4607631e7 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914cab7d87116e620e10a69e666ec6494d4607631e788ac","reqSigs":1,"type":"pubkeyhash","addresses":["1KUsjZKrkd7LYRV7pbnNJtofsq1HAiz6MF"]}},{"value":"0.00000000","n":1,"scriptPubKey":{"asm":"OP_RETURN fb706d6b2839cfd52a4b50cb135f18cf9e0b280ca45b2da5694229f0","hex":"6a1cfb706d6b2839cfd52a4b50cb135f18cf9e0b280ca45b2da5694229f0","type":"nulldata"}},{"value":"0.01755000","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 12d155cefea286e9d3cda6cb64cd8d26a5b95780 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a91412d155cefea286e9d3cda6cb64cd8d26a5b9578088ac","reqSigs":1,"type":"pubkeyhash","addresses":["12iVwKP7jCPnuYy7jbAbyXnZ3FxvgLwvGK"]}}],"valueOut":0.0176043,"size":412,"valueIn":0.0176543,"fees":0.00005}', true);
+    }
+    protected function getSampleCounterpartyTransaction6() {
+        // OP_RETURN 0.5 XCP
+        return json_decode('{"txid":"ed17315c28db9a61f40c2a78021de703c2ad9386b2945d642ffd732c8832f2e9","version":1,"locktime":0,"vin":[{"txid":"a71624023b36f58ef1c1881329261e885a77dc038a5312763a6aa8f4397f89ed","vout":2,"scriptSig":{"asm":"3045022100be988396fc5536198d3bf662620d82ad95cb3c8e05e393ebbd8fecb83f9a7aeb0220332a166767239122c11fe6df5df34421025d42b631f4f1a1f36ede2f3086ff8801 02f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6","hex":"483045022100be988396fc5536198d3bf662620d82ad95cb3c8e05e393ebbd8fecb83f9a7aeb0220332a166767239122c11fe6df5df34421025d42b631f4f1a1f36ede2f3086ff88012102f4aef682535628a7e0492b2b5db1aa312348c3095e0258e26b275b25b10290e6"},"sequence":4294967295,"n":0,"addr":"1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1","valueSat":66163,"value":0.00066163,"doubleSpentTxID":null}],"vout":[{"value":"0.00005430","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 60550079658a3deed658979dd56bb3b367a1ee80 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a91460550079658a3deed658979dd56bb3b367a1ee8088ac","reqSigs":1,"type":"pubkeyhash","addresses":["19nMhSywqDVkPaSjczSp9dm1SEUBukEsJP"]}},{"value":"0.00000000","n":1,"scriptPubKey":{"asm":"OP_RETURN 822682f94c0e981f9f18b4710c9ba306deef4e1d055693fd8b38d8d8","hex":"6a1c822682f94c0e981f9f18b4710c9ba306deef4e1d055693fd8b38d8d8","type":"nulldata"}},{"value":"0.00050733","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 6ca4b6b20eac497e9ca94489c545a3372bdd2fa7 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a9146ca4b6b20eac497e9ca94489c545a3372bdd2fa788ac","reqSigs":1,"type":"pubkeyhash","addresses":["1AuTJDwH6xNqxRLEjPB7m86dgmerYVQ5G1"]}}],"blockhash":"000000000000000010c545b6fa3ef1f7cf45a2a8760b1ee9f2e89673218207ce","confirmations":48,"time":1435766223,"blocktime":1435766223,"valueOut":0.00056163,"size":265,"valueIn":0.00066163,"fees":0.0001}', true);
+    }
+
+    protected function getSampleCounterpartyTransaction7() {
+        // OP_RETURN 77,119 TATIANACOIN
+        return json_decode('{"txid":"32e34ca5001a0c46b88e77b48bd1bf8ca5769d06e6eaea85c2d319a3eb145010","version":1,"locktime":0,"vin":[{"txid":"e5a737c60e6fdc31ceccc2de4c9770381d26d909c8f89616b99d1c6eafbff4fb","vout":2,"scriptSig":{"asm":"3045022100c73bbc46e2389ea0fc68b0ecc34e4be66f5b8193e73d9a3c92e86c5e34d4d6430220369ecb76462ac835156ad5fd3981304f403193db27b7e45bb03163eb61a4f17a01 031d44961fbbba74285107c3503f15f7253361ebff7dad9f5b9a347ffe6cb0e264","hex":"483045022100c73bbc46e2389ea0fc68b0ecc34e4be66f5b8193e73d9a3c92e86c5e34d4d6430220369ecb76462ac835156ad5fd3981304f403193db27b7e45bb03163eb61a4f17a0121031d44961fbbba74285107c3503f15f7253361ebff7dad9f5b9a347ffe6cb0e264"},"sequence":4294967295,"n":0,"addr":"1LHpvZP8QV3CBuDryYdgUs56sd6UYvXuGS","valueSat":830270,"value":0.0083027,"doubleSpentTxID":null}],"vout":[{"value":"0.00005430","n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 e1ce35ec36aa1d37a8b2a6463f0becc5484945f2 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914e1ce35ec36aa1d37a8b2a6463f0becc5484945f288ac","reqSigs":1,"type":"pubkeyhash","addresses":["1Max4vpkTbFgMjDpfaEjfPcdwd3ktTBQ4o"]},"spentTxId":"21924128f24a29ea08fedda7e62197c928157a55afe8a085ba4a143f55bb5f5d","spentIndex":0,"spentTs":1433027395},{"value":"0.00000000","n":1,"scriptPubKey":{"asm":"OP_RETURN 714417279299d6efe1868aa1cd197ff0094b62fb7679217fe184ae69","hex":"6a1c714417279299d6efe1868aa1cd197ff0094b62fb7679217fe184ae69","type":"nulldata"}},{"value":"0.00814840","n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 d3990cbb7f291d61e51fc17180553256efcdc590 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914d3990cbb7f291d61e51fc17180553256efcdc59088ac","reqSigs":1,"type":"pubkeyhash","addresses":["1LHpvZP8QV3CBuDryYdgUs56sd6UYvXuGS"]},"spentTxId":"662309ca52e84d0bd7561e9a4fde517afb97dc8b8d5a94c322e795e20660dfd0","spentIndex":0,"spentTs":1433013021}],"blockhash":"00000000000000001416c0cfd9f2dca68d57877a82211143df4938a721b9ee3e","confirmations":4717,"time":1433011985,"blocktime":1433011985,"valueOut":0.0082027,"size":265,"valueIn":0.0083027,"fees":0.0001}', true);
     }
 
 

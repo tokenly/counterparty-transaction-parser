@@ -21,7 +21,7 @@ class Parser
 
     /**
      * parses a transaction and determines the counterparty transaction type
-     * @param  array  $tx Transaction data from insight
+     * @param  array  $tx Transaction data from bitcoind
      * @param  int|null  $protocol_version the procol version.  Leave blank for the latest protocol.
      * @return string|null Counterparty transaction type
      */
@@ -33,7 +33,7 @@ class Parser
 
     /**
      * Determine if the transaction is a counterparty transaction
-     * @param  array  $tx Transaction data from insight
+     * @param  array  $tx Transaction data from bitcoind
      * @param  int|null  $protocol_version the procol version.  Leave blank for the latest protocol.
      * @return boolean
      */
@@ -43,7 +43,7 @@ class Parser
 
     /**
      * parses a transaction and returns the raw counterparty data
-     * @param  array $tx Transaction data from insight
+     * @param  array $tx Transaction data from bitcoind
      * @param  int|null  $protocol_version the procol version.  Leave blank for the latest protocol.
      * @return array transaction data including type, destination, asset and quantity  
      */

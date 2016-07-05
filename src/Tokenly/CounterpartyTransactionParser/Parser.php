@@ -300,6 +300,7 @@ class Parser
 
                 if ($asm[0] == 'OP_RETURN') {
                     list($new_destination, $new_data) = $fn_decode_opreturn($asm);
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("OP_RETURN \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
                 } else if ($asm[count($asm) - 1] == 'OP_CHECKSIG') {
                     self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN OP_CHECKSIG      ======");
                     list($new_destination, $new_data) = $fn_decode_checksig($asm);
@@ -395,8 +396,28 @@ class Parser
     }
 
     protected function parseTransactionData($binary_data, $source, $destination) {
-        list($type_id, $asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo) = array_values(unpack('I1t/N4aq', $binary_data));
+        list($type_id) = array_values(unpack('Nt', substr($binary_data, 0, 4)));
         $type = self::typeIDToType($type_id);
+
+        if ($type) {
+            $method = "parseTransactionData_${type}";
+            if (method_exists($this, $method)) {
+                return call_user_func([$this, $method], $type, substr($binary_data, 4), $source, $destination);
+            }
+        }
+
+        // default to just returning the type and the source/destination
+        $parsed_data = [
+            'type'         => $type,
+            'sources'      => is_array($source) ? $source : [$source],
+            'destinations' => is_array($destination) ? $destination : [$destination],
+        ];
+        return $parsed_data;
+    }
+
+
+    protected function parseTransactionData_send($type, $binary_data, $source, $destination) {
+        list($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo) = array_values(unpack('N4aq', $binary_data));
         $asset_id = $asset_id_hi << 32 | $asset_id_lo; 
         $quantity = $quantity_hi << 32 | $quantity_lo; 
 
@@ -406,26 +427,41 @@ class Parser
             'sources'      => is_array($source) ? $source : [$source],
             'destinations' => is_array($destination) ? $destination : [$destination],
         ];
-        if ($type !== 'send') {
-            return $parsed_data;
-        }
 
         $parsed_data['quantity'] = $quantity;
         $parsed_data['asset'] = self::asset_name($asset_id);
+
         return $parsed_data;
+    }    
+
+    protected function parseTransactionData_issuance($type, $binary_data, $source, $destination) {
+        list($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo, $divisible, $callable, $call_date, $call_price, $description_length, $description_hex) = array_values(unpack('N4aq/Cd/Cca/Ncd/Ncp/Cdl/H*desc', $binary_data));
+        $asset_id = $asset_id_hi << 32 | $asset_id_lo; 
+        $quantity = $quantity_hi << 32 | $quantity_lo; 
 
 
-        // 'tx_index': tx['tx_index'],
-        // 'tx_hash': tx['tx_hash'],
-        // 'block_index': tx['block_index'],
-        // 'source': tx['source'],
-        // 'destination': tx['destination'],
-        // 'asset': asset,
-        // 'quantity': quantity,
-        // 'status': status,
-
+        $parsed_data = [
+            'type'         => $type,
+            'sources'      => is_array($source) ? $source : [$source],
+            'destinations' => is_array($destination) ? $destination : [$destination],
+        ];
+        $parsed_data['quantity']    = $quantity;
+        $parsed_data['asset']       = self::asset_name($asset_id);
+        $parsed_data['divisible']   = !!$divisible;
+        $parsed_data['callable']    = !!$callable;
+        $parsed_data['call_date']   = $call_date;
+        $parsed_data['call_price']  = $call_price;
+        $parsed_data['description'] = self::hexToText($description_hex);
+        return $parsed_data;
     }
-    
+
+    protected static function hexToText($str) {
+        $out = '';
+        for ($i=0; $i < strlen($str); $i = $i+2) {
+            $out .= chr(hexdec(substr($str, $i, 2)));
+        }
+        return $out;
+    }
 
     protected static function get_pubkeyhash($scriptpubkey) {
         $asm = explode(' ', $scriptpubkey['asm']);
@@ -641,6 +677,9 @@ class Parser
                 $out .= $char;
             }
         }
+
+        $out .= " (".bin2hex($text).")";
+
         return $out;
     }
 

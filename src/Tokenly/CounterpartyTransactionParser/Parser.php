@@ -344,7 +344,9 @@ class Parser
             foreach ($tx['vin'] as $vin) {
                 $vin_txid = $vin['txid'];
                 $vin_utxo_offset = $vin['vout'];
-                $sources[] = $vin['addr'];
+                if (isset($vin['addr'])) {
+                    $sources[] = $vin['addr'];
+                }
             }
 
             $sources = array_unique($sources);
@@ -412,6 +414,7 @@ class Parser
             'sources'      => is_array($source) ? $source : [$source],
             'destinations' => is_array($destination) ? $destination : [$destination],
         ];
+        self::DEBUG_LOGGING_ENABLED && self::wlog("Parsed Data: ".json_encode($parsed_data, 192));
         return $parsed_data;
     }
 

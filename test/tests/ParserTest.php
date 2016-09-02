@@ -170,6 +170,12 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         $type = $parser->lookupCounterpartyTransactionType($tx_data);
         PHPUnit::assertEquals('issuance', $type);
 
+        $counterparty_data = $parser->parseBitcoinTransaction($tx_data, 2);
+        PHPUnit::assertEquals("LTBCOIN", $counterparty_data['asset']);
+        PHPUnit::assertEquals("Crypto-Rewards Program http://ltbcoin.com", $counterparty_data['description']);
+        PHPUnit::assertEquals(140952713000000, $counterparty_data['quantity']);
+        PHPUnit::assertEquals(true, $counterparty_data['divisible']);
+
     }
 
     public function testOrderParser() {

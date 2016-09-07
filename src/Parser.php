@@ -458,11 +458,61 @@ class Parser
         return $parsed_data;
     }
 
-    protected static function hexToText($str) {
+    protected function parseTransactionData_broadcast($type, $binary_data, $source, $destination) {
+        // converts 2 32bit words representing a 64bit float into a 32bit float
+        $hex64toFloat32 = function($hi, $lo) {
+            $to_little_endian = function($data) {
+                if (strlen($data) <= 2) {
+                    return $data;
+                }
+                $u = unpack("H*", strrev(pack("H*", $data)));
+                return $u[1];
+            };
+
+            $is_positive = !($hi >> 31);
+            $sign_bit = $hi & 0x80000000;       // 10000000000000000000000000000000
+            $sign_bit_32 = $sign_bit;
+            $exponent = $hi & 0x7ff00000;       // 01111111111100000000000000000000
+            $exponent_32 = ($exponent >> 23) << 23;
+            $significand_hi = $hi & 0x000fffff; // 00000000000011111111111111111111
+            $significand_32 = $hi << 3; // top 20 bits
+            $significand_32 = $significand_32 & ($lo >> 29); // last 3 bits
+            $float_32_bigendian = $sign_bit_32 | $exponent_32 | $significand_32;
+            list($float_val) = array_values(unpack('f', hex2bin($to_little_endian(dechex($float_32_bigendian)))));
+            return $float_val;
+        };
+
+        list($timestamp, $value, $value2, $fee_fraction, $message_hex) = array_values(unpack('Nts/N2rv/Nfr/H*desc', $binary_data));
+        $value = $hex64toFloat32($value, $value2);
+
+        $parsed_data = [
+            'type'    => $type,
+            'sources' => is_array($source) ? $source : [$source],
+        ];
+        $parsed_data['source']       = $parsed_data['sources'][0];
+        $parsed_data['timestamp']    = $timestamp;
+        $parsed_data['value']        = $value;
+        $parsed_data['fee_fraction'] = $fee_fraction;
+        $parsed_data['message']      = self::hexToText($message_hex, true);
+        return $parsed_data;
+    }
+
+    protected static function hexToText($str, $with_leading_length_byte=false) {
         $out = '';
-        for ($i=0; $i < strlen($str); $i = $i+2) {
+
+        if ($with_leading_length_byte) {
+            $len = hexdec(substr($str, 0, 2)) * 2;
+            $start = 2;
+
+        } else {
+            $len = strlen($str);
+            $start = 0;
+        }
+
+        for ($i=$start; $i < $len+$start; $i = $i+2) {
             $out .= chr(hexdec(substr($str, $i, 2)));
         }
+
         return $out;
     }
 

@@ -685,7 +685,7 @@ class Parser
         return hash('sha256', hash('sha256', $x));
     }
 
-    protected static function asset_name($asset_id) {
+    public static function asset_name($asset_id) {
         // BTC = 'BTC'
         // XCP = 'XCP'
         if ($asset_id === 0) { return 'BTC'; }
@@ -694,6 +694,11 @@ class Parser
         $b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
         if ($asset_id < pow(26, 3)) { throw new Exception("asset ID was too low", 1); }
+
+        // look for numeric asset name
+        if (gmp_cmp($asset_id, gmp_add(gmp_pow(26, 12), 1)) >= 0) {
+            return 'A'.$asset_id;
+        }
 
         # Divide that integer into Base 26 string.
         $asset_name = '';

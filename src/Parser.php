@@ -276,6 +276,18 @@ class Parser
         };
 
 
+        // def decode_scripthash(asm):
+        $fn_decode_scripthash = function($asm) {
+            $destination = '';
+            $data = null;
+
+            $P2SH_ADDRESSVERSION = "05";
+            $destination = self::base58_check_encode($asm[1], $P2SH_ADDRESSVERSION);
+
+            return [$destination, $data];
+        };
+
+
         try {
             // ignore coinbase txs
             if (isset($tx['vin'][0]['coinbase'])) { throw new Exception("coinbase transaction", 1); }
@@ -309,6 +321,12 @@ class Parser
                     self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN OP_CHECKMULTISIG ======");
                     list($new_destination, $new_data) = $fn_decode_checkmultisig($asm);
                     self::DEBUG_LOGGING_ENABLED && self::wlog("OP_CHECKMULTISIG \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
+                } else if ($asm[0] == 'OP_HASH160' && $asm[count($asm) - 1] == 'OP_EQUAL') {
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN decode scripthash ({$asm[1]}) ======");
+                    list($new_destination, $new_data) = $fn_decode_scripthash($asm);
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("decode \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
+                    // elif p2sh_support and asm[0] == 'OP_HASH160' and asm[-1] == 'OP_EQUAL' and len(asm) == 3:
+                    // new_destination, new_data = decode_scripthash(asm)
                 } else {
                     throw new Exception("unrecognised output type", 1);
                 }
@@ -339,20 +357,16 @@ class Parser
                 throw new Exception('no data and not unspendable', 1);
             }
 
-            # Collect all (unique) source addresses.
-            $sources = [];
+            // the first input is the source of the send
+            //   all other sources are for funding the transaction
+            $source = null;
             foreach ($tx['vin'] as $vin) {
-                $vin_txid = $vin['txid'];
-                $vin_utxo_offset = $vin['vout'];
                 if (isset($vin['addr'])) {
-                    $sources[] = $vin['addr'];
+                    $source = $vin['addr'];
+                    break;
                 }
             }
-
-            $sources = array_unique($sources);
-
-            // we don't handle multiple sources yet
-            if (count($sources) > 1) { throw new Exception("Multiple sources are not allowed", 1); }
+            $sources = [$source];
 
             return $this->parseTransactionData($data, $sources, $destinations);
 

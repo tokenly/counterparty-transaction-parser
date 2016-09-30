@@ -238,6 +238,37 @@ class ParserTest extends \PHPUnit_Framework_TestCase
         PHPUnit::assertEquals("A95428956661682177", $parser->asset_name('95428956661682177'));
     }
 
+    // OP_RETURN send 100 TOKENLY from 12717MBviQxttaBVhFGRP1LxD8X6CaW452 to 3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ
+    public function testMultisigOpReturnParser_send1() {
+        $parser = new Parser();
+        $counterparty_data = $parser->parseBitcoinTransaction(
+            $this->getMultisigSendToP2SH()
+        );
+        PHPUnit::assertNotEmpty($counterparty_data);
+
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals('12717MBviQxttaBVhFGRP1LxD8X6CaW452', $counterparty_data['sources'][0]);
+        PHPUnit::assertEquals('3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ', $counterparty_data['destinations'][0]);
+        PHPUnit::assertEquals('TOKENLY', $counterparty_data['asset']);
+        PHPUnit::assertEquals(100 * self::SATOSHI, $counterparty_data['quantity']);
+    }
+
+    // OP_RETURN send 5 TOKENLY from 3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ to 1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7
+    public function testMultisigOpReturnParser_send2() {
+        $parser = new Parser();
+        $counterparty_data = $parser->parseBitcoinTransaction(
+            $this->getMultisigFromP2SH()
+        );
+        PHPUnit::assertNotEmpty($counterparty_data);
+
+        PHPUnit::assertEquals('send', $counterparty_data['type']);
+        PHPUnit::assertEquals('3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ', $counterparty_data['sources'][0]);
+        PHPUnit::assertEquals('1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7', $counterparty_data['destinations'][0]);
+        PHPUnit::assertEquals('TOKENLY', $counterparty_data['asset']);
+        PHPUnit::assertEquals(5 * self::SATOSHI, $counterparty_data['quantity']);
+
+    }
+
     // ------------------------------------------------------------------------
 
     protected function getSampleCounterpartyTransaction() {
@@ -318,5 +349,17 @@ class ParserTest extends \PHPUnit_Framework_TestCase
     }
 
 
+    protected function getMultisigSendToP2SH() {
+        // OP_RETURN send 100 TOKENLY from 12717MBviQxttaBVhFGRP1LxD8X6CaW452 to 3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ
+        // d7490e205e910613d139de0e65da45ffe964724748e6cbdcdebce0b269eb6fc9
+        return json_decode('{"hex":"0100000001b04565633693f5319a61e1366462372b284f4f0b6407fc931d339e6329ec790a020000006a47304402204c70ba7358d3075d5010f6f04f166d641c6e4d606816a76b81f7a083f8983c1b02206ed69c900c09643f992c6b81f93f84831034e28a950e4364a371671478c4dadf012102f537f58066db27f8fa3df7527f99e9d9a09fda4a5622cb4071a475ce070d26f5ffffffff035e1500000000000017a91469b352d2b9e19cccb82c8d4ab416c33b63f497628700000000000000001e6a1c1a7e2de77f8a67969b11a835b257f9e7d63105447a44d70bf1b01969708d0700000000001976a9140c1ab681d252eb6c99002d0a73303e9677b1b02588ac00000000","txid":"d7490e205e910613d139de0e65da45ffe964724748e6cbdcdebce0b269eb6fc9","size":262,"version":1,"locktime":0,"vin":[{"txid":"0a79ec29639e331d93fc07640b4f4f282b37626436e1619a31f59336636545b0","vout":2,"scriptSig":{"asm":"304402204c70ba7358d3075d5010f6f04f166d641c6e4d606816a76b81f7a083f8983c1b02206ed69c900c09643f992c6b81f93f84831034e28a950e4364a371671478c4dadf[ALL] 02f537f58066db27f8fa3df7527f99e9d9a09fda4a5622cb4071a475ce070d26f5","hex":"47304402204c70ba7358d3075d5010f6f04f166d641c6e4d606816a76b81f7a083f8983c1b02206ed69c900c09643f992c6b81f93f84831034e28a950e4364a371671478c4dadf012102f537f58066db27f8fa3df7527f99e9d9a09fda4a5622cb4071a475ce070d26f5"},"sequence":4294967295,"n":0,"addr":"12717MBviQxttaBVhFGRP1LxD8X6CaW452","value":0.0051043,"valueSat":510430}],"vout":[{"value":5.47e-5,"n":0,"scriptPubKey":{"asm":"OP_HASH160 69b352d2b9e19cccb82c8d4ab416c33b63f49762 OP_EQUAL","hex":"a91469b352d2b9e19cccb82c8d4ab416c33b63f4976287","reqSigs":1,"type":"scripthash","addresses":["3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ"]}},{"value":0,"n":1,"scriptPubKey":{"asm":"OP_RETURN 1a7e2de77f8a67969b11a835b257f9e7d63105447a44d70bf1b01969","hex":"6a1c1a7e2de77f8a67969b11a835b257f9e7d63105447a44d70bf1b01969","type":"nulldata"}},{"value":0.0049496,"n":2,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 0c1ab681d252eb6c99002d0a73303e9677b1b025 OP_EQUALVERIFY OP_CHECKSIG","hex":"76a9140c1ab681d252eb6c99002d0a73303e9677b1b02588ac","reqSigs":1,"type":"pubkeyhash","addresses":["12717MBviQxttaBVhFGRP1LxD8X6CaW452"]}}],"blockhash":"0000000000000000043a0cf470191216020313adc3ac80658da6314a2a6d1ffb","confirmations":3143,"time":1473481672,"blocktime":1473481672,"valueIn":0.0051043,"valueInSat":510430,"valueOut":0.0050043,"valueOutSat":500430,"fees":0.0001,"feesSat":10000}', true);
+
+    }
+    protected function getMultisigFromP2SH() {
+        // OP_RETURN send 5 TOKENLY from 3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ to 1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7
+        // 84bfa4942053c680f3742df0be27df69d559a71fd01162a5a3662f5b61eb8efc
+        return json_decode('{"hex":"0100000001770cb298c9b425ab26bec852fb0121e0da78f55cad7eee957f7d4b203b7bd9d101000000fdfe0000483045022100dfbdebbe17a5a1fd5387c0f2b1aceeefb9bb33b1317e67f4d82611b5e7e3be300220440f3ebd9e9f5f6411de426dca79ba17b35f197e72e2fe366dedfa938af7ab4e01483045022100f7f3a6001f276f83eee6e39eef61cc913c2707328188625c36ac515cbf6d60fd02200974ffd82c200efec8b739987ed7c78eabd6cd8d52b032c5ad68b8643fbc7721014c69522102338b5dd21f2d60869dea3d4564fa74c1cc5a8877150b098b68067938c516da432103afba15b255850492ddbbcde284fe80d83900b2eddf6998caea3ba5a13ff281612103c7b897508acf86f9d298b2b76da8e7c14b32453f027f0c4c95402c850c90b21153aeffffffff0336150000000000001976a914dd82adfd30738d97c94c6db5b057bf8de81302af88ac00000000000000001e6a1ce4eac2c9665306f32114efca7f7180cf600ae2df9969c5991927b5cf91cd0e000000000017a91469b352d2b9e19cccb82c8d4ab416c33b63f497628700000000","txid":"84bfa4942053c680f3742df0be27df69d559a71fd01162a5a3662f5b61eb8efc","size":412,"version":1,"locktime":0,"vin":[{"txid":"d1d97b3b204b7d7f95ee7ead5cf578dae02101fb52c8be26ab25b4c998b20c77","vout":1,"scriptSig":{"asm":"0 3045022100dfbdebbe17a5a1fd5387c0f2b1aceeefb9bb33b1317e67f4d82611b5e7e3be300220440f3ebd9e9f5f6411de426dca79ba17b35f197e72e2fe366dedfa938af7ab4e[ALL] 3045022100f7f3a6001f276f83eee6e39eef61cc913c2707328188625c36ac515cbf6d60fd02200974ffd82c200efec8b739987ed7c78eabd6cd8d52b032c5ad68b8643fbc7721[ALL] 522102338b5dd21f2d60869dea3d4564fa74c1cc5a8877150b098b68067938c516da432103afba15b255850492ddbbcde284fe80d83900b2eddf6998caea3ba5a13ff281612103c7b897508acf86f9d298b2b76da8e7c14b32453f027f0c4c95402c850c90b21153ae","hex":"00483045022100dfbdebbe17a5a1fd5387c0f2b1aceeefb9bb33b1317e67f4d82611b5e7e3be300220440f3ebd9e9f5f6411de426dca79ba17b35f197e72e2fe366dedfa938af7ab4e01483045022100f7f3a6001f276f83eee6e39eef61cc913c2707328188625c36ac515cbf6d60fd02200974ffd82c200efec8b739987ed7c78eabd6cd8d52b032c5ad68b8643fbc7721014c69522102338b5dd21f2d60869dea3d4564fa74c1cc5a8877150b098b68067938c516da432103afba15b255850492ddbbcde284fe80d83900b2eddf6998caea3ba5a13ff281612103c7b897508acf86f9d298b2b76da8e7c14b32453f027f0c4c95402c850c90b21153ae"},"sequence":4294967295,"n":0,"addr":"3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ","value":0.01,"valueSat":1000000}],"vout":[{"value":5.43e-5,"n":0,"scriptPubKey":{"asm":"OP_DUP OP_HASH160 dd82adfd30738d97c94c6db5b057bf8de81302af OP_EQUALVERIFY OP_CHECKSIG","hex":"76a914dd82adfd30738d97c94c6db5b057bf8de81302af88ac","reqSigs":1,"type":"pubkeyhash","addresses":["1MCEtBB5X4ercRsvq2GmgysZ9ZDsqj8Xh7"]}},{"value":0,"n":1,"scriptPubKey":{"asm":"OP_RETURN e4eac2c9665306f32114efca7f7180cf600ae2df9969c5991927b5cf","hex":"6a1ce4eac2c9665306f32114efca7f7180cf600ae2df9969c5991927b5cf","type":"nulldata"}},{"value":0.00970129,"n":2,"scriptPubKey":{"asm":"OP_HASH160 69b352d2b9e19cccb82c8d4ab416c33b63f49762 OP_EQUAL","hex":"a91469b352d2b9e19cccb82c8d4ab416c33b63f4976287","reqSigs":1,"type":"scripthash","addresses":["3BKuhJXt5YD1Vz2UyD4Fz4XaqN894saJaQ"]}}],"blockhash":"0000000000000000043e63a23a23249d7eb124293776fa7a440caa23c158fa69","confirmations":3141,"time":1473484420,"blocktime":1473484420,"valueIn":0.01,"valueInSat":1000000,"valueOut":0.00975559,"valueOutSat":975559,"fees":0.00024441,"feesSat":24441}', true);
+
+    }
 
 }

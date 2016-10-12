@@ -2,7 +2,8 @@
 
 namespace Tokenly\CounterpartyTransactionParser;
 
-use \Exception;
+use GMP;
+use Exception;
 
 /*
 * Parser
@@ -312,7 +313,7 @@ class Parser
 
                 if ($asm[0] == 'OP_RETURN') {
                     list($new_destination, $new_data) = $fn_decode_opreturn($asm);
-                    self::DEBUG_LOGGING_ENABLED && self::wlog("OP_RETURN \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
+                    self::DEBUG_LOGGING_ENABLED && self::wlog("====== OP_RETURN \$new_destination=".self::dumpText($new_destination)." \$new_data=".self::dumpText($new_data));
                 } else if ($asm[count($asm) - 1] == 'OP_CHECKSIG') {
                     self::DEBUG_LOGGING_ENABLED && self::wlog("====== BEGIN OP_CHECKSIG      ======");
                     list($new_destination, $new_data) = $fn_decode_checksig($asm);
@@ -435,9 +436,7 @@ class Parser
 
     protected function parseTransactionData_send($type, $binary_data, $source, $destination) {
         list($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo) = array_values(unpack('N4aq', $binary_data));
-        $asset_id = $asset_id_hi << 32 | $asset_id_lo; 
-        $quantity = $quantity_hi << 32 | $quantity_lo; 
-
+        list($asset_id_gmp, $quantity_gmp, $asset_name) = self::parseAssetAndQuantity($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo);
 
         $parsed_data = [
             'type'         => $type,
@@ -445,16 +444,15 @@ class Parser
             'destinations' => is_array($destination) ? $destination : [$destination],
         ];
 
-        $parsed_data['quantity'] = $quantity;
-        $parsed_data['asset'] = self::asset_name($asset_id);
+        $parsed_data['quantity'] = gmp_strval($quantity_gmp);
+        $parsed_data['asset'] = $asset_name;
 
         return $parsed_data;
-    }    
+    }
 
     protected function parseTransactionData_issuance($type, $binary_data, $source, $destination) {
         list($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo, $divisible, $callable, $call_date, $call_price, $description_length, $description_hex) = array_values(unpack('N4aq/Cd/Cca/Ncd/Ncp/Cdl/H*desc', $binary_data));
-        $asset_id = $asset_id_hi << 32 | $asset_id_lo; 
-        $quantity = $quantity_hi << 32 | $quantity_lo; 
+        list($asset_id_gmp, $quantity_gmp, $asset_name) = self::parseAssetAndQuantity($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo);
 
 
         $parsed_data = [
@@ -462,8 +460,8 @@ class Parser
             'sources'      => is_array($source) ? $source : [$source],
             'destinations' => is_array($destination) ? $destination : [$destination],
         ];
-        $parsed_data['quantity']    = $quantity;
-        $parsed_data['asset']       = self::asset_name($asset_id);
+        $parsed_data['quantity']    = gmp_strval($quantity_gmp);
+        $parsed_data['asset']       = $asset_name;
         $parsed_data['divisible']   = !!$divisible;
         $parsed_data['callable']    = !!$callable;
         $parsed_data['call_date']   = $call_date;
@@ -509,6 +507,13 @@ class Parser
         $parsed_data['fee_fraction'] = $fee_fraction;
         $parsed_data['message']      = self::hexToText($message_hex, true);
         return $parsed_data;
+    }
+
+    protected function parseAssetAndQuantity($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo) {
+        $asset_id_gmp = (gmp_init($asset_id_hi) << 32) | gmp_init($asset_id_lo);
+        $quantity_gmp = (gmp_init($quantity_hi) << 32) | gmp_init($quantity_lo);
+        $asset_name = self::asset_name($asset_id_gmp);
+        return [$asset_id_gmp, $quantity_gmp, $asset_name];
     }
 
     protected static function hexToText($str, $with_leading_length_byte=false) {
@@ -699,11 +704,9 @@ class Parser
         return hash('sha256', hash('sha256', $x));
     }
 
-    public static function asset_name($asset_id) {
-        // BTC = 'BTC'
-        // XCP = 'XCP'
-        if ($asset_id === 0) { return 'BTC'; }
-        if ($asset_id === 1) { return 'XCP'; }
+    public static function asset_name(GMP $asset_id) {
+        if (gmp_cmp($asset_id, 0) === 0) { return 'BTC'; }
+        if (gmp_cmp($asset_id, 1) === 0) { return 'XCP'; }
 
         $b26_digits = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
@@ -716,7 +719,7 @@ class Parser
 
         # Divide that integer into Base 26 string.
         $asset_name = '';
-        $n = gmp_init($asset_id);
+        $n = clone $asset_id;
         while (gmp_cmp($n, 0) > 0) {
             list($n, $r) = gmp_div_qr($n, 26, GMP_ROUND_ZERO);
             $asset_name = substr($b26_digits, gmp_intval($r), 1).$asset_name;

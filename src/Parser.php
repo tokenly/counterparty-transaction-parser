@@ -516,7 +516,7 @@ class Parser
         return [$asset_id_gmp, $quantity_gmp, $asset_name];
     }
 
-    protected static function hexToText($str, $with_leading_length_byte=false) {
+    protected static function hexToText($str, $with_leading_length_byte=false, $force_utf_8=true) {
         $out = '';
 
         if ($with_leading_length_byte) {
@@ -530,6 +530,11 @@ class Parser
 
         for ($i=$start; $i < $len+$start; $i = $i+2) {
             $out .= chr(hexdec(substr($str, $i, 2)));
+        }
+
+        if ($force_utf_8) {
+            // removes invalid characters
+            $out = mb_convert_encoding($out, 'UTF-8', 'UTF-8');
         }
 
         return $out;

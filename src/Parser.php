@@ -467,7 +467,7 @@ class Parser
 
         // parse memo
         //   asset, quantity and destination is 37 bytes (8 + 8 + 21)
-        $memo = null;
+        $memo_utf8 = null;
         $memo_hex = null;
         if (strlen($binary_data) > 37) {
             list($memo_hex) = array_values(unpack('H*m', substr($binary_data, 37)));

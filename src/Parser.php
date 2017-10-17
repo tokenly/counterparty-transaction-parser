@@ -387,6 +387,8 @@ class Parser
     protected static function typeIDToType($type_id) {
         if ($type_id === 0) {
             return 'send';
+        } else if ($type_id === 2) {
+            return 'enhanced_send';
         } else if ($type_id === 10) {
             return 'order';
         } else if ($type_id === 11) {
@@ -413,13 +415,19 @@ class Parser
     }
 
     protected function parseTransactionData($binary_data, $source, $destination) {
-        list($type_id) = array_values(unpack('Nt', substr($binary_data, 0, 4)));
+        // handle 1 byte or 4 byte tx type
+        $type_id_length = 1;
+        list($type_id) = array_values(unpack('Ct', substr($binary_data, 0, 1)));
+        if ($type_id == 0) {
+            $type_id_length = 4;
+            list($type_id) = array_values(unpack('Nt', substr($binary_data, 0, 4)));
+        }
         $type = self::typeIDToType($type_id);
 
         if ($type) {
             $method = "parseTransactionData_${type}";
             if (method_exists($this, $method)) {
-                return call_user_func([$this, $method], $type, substr($binary_data, 4), $source, $destination);
+                return call_user_func([$this, $method], $type, substr($binary_data, $type_id_length), $source, $destination);
             }
         }
 
@@ -446,6 +454,37 @@ class Parser
 
         $parsed_data['quantity'] = gmp_strval($quantity_gmp);
         $parsed_data['asset'] = $asset_name;
+
+        return $parsed_data;
+    }
+
+    protected function parseTransactionData_enhanced_send($type, $binary_data, $source, $destination) {
+        list($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo, $short_address_hex) = array_values(unpack('N4aq/H42addr', $binary_data));
+        list($asset_id_gmp, $quantity_gmp, $asset_name) = self::parseAssetAndQuantity($asset_id_hi, $asset_id_lo, $quantity_hi, $quantity_lo);
+
+        // parse asset destination
+        $destination = self::base58_encode_checksum($short_address_hex);
+
+        // parse memo
+        //   asset, quantity and destination is 37 bytes (8 + 8 + 21)
+        $memo = null;
+        $memo_hex = null;
+        if (strlen($binary_data) > 37) {
+            list($memo_hex) = array_values(unpack('H*m', substr($binary_data, 37)));
+            $memo_utf8 = self::hexToText($memo_hex, false, true, true);
+        }
+
+        $parsed_data = [
+            'type'         => 'send', // report this as a standard send
+            'sources'      => is_array($source) ? $source : [$source],
+            'destinations' => is_array($destination) ? $destination : [$destination],
+        ];
+
+        $parsed_data['quantity'] = gmp_strval($quantity_gmp);
+        $parsed_data['asset'] = $asset_name;
+
+        $parsed_data['memo_hex'] = $memo_hex;
+        $parsed_data['memo'] = $memo_utf8;
 
         return $parsed_data;
     }
@@ -516,7 +555,8 @@ class Parser
         return [$asset_id_gmp, $quantity_gmp, $asset_name];
     }
 
-    protected static function hexToText($str, $with_leading_length_byte=false, $force_utf_8=true) {
+
+    protected static function hexToText($str, $with_leading_length_byte=false, $force_utf_8=true, $check_utf8_validity=false) {
         $out = '';
 
         if ($with_leading_length_byte) {
@@ -533,6 +573,13 @@ class Parser
         }
 
         if ($force_utf_8) {
+            if ($check_utf8_validity) {
+                if (!preg_match('!!u', $out)) {
+                    // not valid utf-8
+                    return null;
+                }
+            }
+
             // removes invalid characters
             $out = mb_convert_encoding($out, 'UTF-8', 'UTF-8');
         }
